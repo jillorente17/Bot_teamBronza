@@ -3,7 +3,7 @@ const TelegramBot = require('node-telegram-bot-api'); //Api del bot
 const { on } = require('nodemon');//proceso nodemon
 const token = '1497336724:AAEA2iYXPqa_OW5aVJ0nft7Z2kIFzRfh8ts';// token de acceso al bot
 const bot = new TelegramBot(token, {polling:true});//consultar los textos y escritos del chat
-var pool = require('./config/db_config');//configuración de la base de datos
+var pool = require('./db_config');//configuración de la base de datos
 const emoji = require('node-emoji').emoji;
 //revisar los errores del bot
 bot.on('polling_error', function(error){
