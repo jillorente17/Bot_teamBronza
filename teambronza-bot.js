@@ -11,36 +11,15 @@ bot.on('polling_error', function(error){
 });
 
 //Buenos días del bot.
-bot.on('text',(msg)=>{
-    currentDate = new Date();
-    cHour = currentDate.getHours();
-    chatId = msg.chat.id;
-    member = msg.from.first_name;
-    GMessage = ["Buenos días"];
 
-    if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mauro') && member=="Gisell"|| 
-       msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mario') && member=="Gisell"){
-            bot.sendMessage(chatId,"Jose dice: Duren");
-            bot.sendMessage(chatId,`${emoji.thumbsup}`);
-        }
-    if(GMessage.includes(msg.text.substring(0,11))){
-        if(member.toString() == "Jose" && cHour>6 && cHour<12){
-            bot.sendMessage(chatId,`Buenos días, Señor`);
-        }
-        else if(cHour>6 && cHour<12){
-            bot.sendMessage(chatId,`Buenos días ${member}`);
-        } 
-        else if(cHour> 12 && cHour<18){
-            bot.sendMessage(chatId, `Buenas tardes, querrás decir`)
-        }
-
-    };
-})
 // Objecto encargado de recolectar la información de registro.
-var dataRegister = {userId:""};
+var dataRegister={};
 function createRegister(chatId,user,action,info){
     userId = user.toString();
     switch(action){
+        case "chatting":
+            dataRegister[userId][action]=info;
+            break;
         case "consult":
             dataRegister[userId][action]=info
             break;
@@ -63,14 +42,13 @@ function createRegister(chatId,user,action,info){
     return(dataRegister);
 }
 
+
 //Despligue de funciones de comandos
 bot.onText(/^\/opciones/, (msg)=>{
     chatId = msg.chat.id.toString();
     member = msg.from.first_name;
-    dataRegister[member]={}
+    dataRegister[member]={};
     registerButton(chatId,member);
-
-    
 
 });
 bot.onText(/^\/recordatorio/,(msg)=>{
@@ -130,7 +108,7 @@ let consultButtons = async (chatId,member) =>{
     bot.sendMessage(chatId,`Ok ${member}. Seleccione el criterio de búsqueda`, optConsult)
 }
 //Callbacks de los botones
-bot.on("callback_query", function onCallbackQuery(data,inline_message_id){
+bot.on("callback_query", function onCallbackQuery(data){
     action = data.data;
     member = data.from.first_name;
     chatId = data.message.chat.id;
@@ -153,7 +131,7 @@ bot.on("callback_query", function onCallbackQuery(data,inline_message_id){
             break;
         case "consult":
             consultButtons(chatId,member);
-            createRegister(chatId,member,`consult`,`activated`)
+            createRegister(chatId,member,`consult`,`activated`);
             break;
         case "name":
             bot.sendMessage(chatId,`Escriba *nombre* más el nombre de la persona a buscar`,{parse_mode:"Markdown"});
@@ -189,9 +167,36 @@ bot.on("callback_query", function onCallbackQuery(data,inline_message_id){
 bot.on('text', (msg)=>{
     chatId = msg.chat.id;
     member = msg.from.first_name;
-
+    currentDate = new Date();
+    cHour = currentDate.getHours();
+    chatId = msg.chat.id;
+    member = msg.from.first_name;
+    GMessage = ["Buenos días"];
+    checkMsg(chatId,member,msg.text);
+    if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mauro') && member=="Gisell"|| 
+       msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mario') && member=="Gisell"){
+            bot.sendMessage(chatId,"Jose dice: Duren");
+            bot.sendMessage(chatId,`${emoji.thumbsup}`);
+        }
+    else if(GMessage.includes(msg.text.substring(0,11))){
+        if(member.toString() == "Jose" && cHour>6 && cHour<12){
+            bot.sendMessage(chatId,`Buenos días, Señor`);
+        }
+        else if(cHour>6 && cHour<12){
+            bot.sendMessage(chatId,`Buenos días ${member}`);
+        } 
+        else if(cHour> 12 && cHour<18){
+            bot.sendMessage(chatId, `Buenas tardes, querrás decir`)
+        }
+    }
+else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('test')){
+    if(msg.text.substring(5, msg.text.length) == "on"){
+        bot.sendMessage(chatId, `Hola, esta opción la usa mi creador para pruebas`);
+        
+    }
+    
 //registro de los miembros
-    if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('nombre')){
+}else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('nombre')){
     
         if(dataRegister[member]["register"] ==="activated"){
 
@@ -204,13 +209,15 @@ bot.on('text', (msg)=>{
     Ahora, seguido de *fecha* ingresa tu fecha de nacimiento de esta forma: aaaa-mm-dd` , {parse_mode: "Markdown"});
             }
             
-        }else if(dataRegister[member]["consult"]==="activated"){
+        }
+    else if(dataRegister[member]["consult"]=="activated"){
 
             let name =  msg.text.substring(7, msg.text.length);
-            findName(chatId,name)
-        }
+            findName(chatId,name);
 
-    }else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('fecha')){
+    }
+}
+    else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('fecha')){
 
         if(dataRegister[member]["register"] ==="activated"){
             memberDate = msg.text.substring(5, msg.text.length);
@@ -253,7 +260,13 @@ bot.on('text', (msg)=>{
 });
 
 
+function checkMsg(chatId,member,msg){
 
+    if (Object.keys(dataRegister).length == 0){
+        dataRegister[member] = {}
+    }
+    
+}
 //Funciones de llamados de los CallbackQueries
 function findBirthday(chatId,date){
     let tempDate= date;
@@ -359,7 +372,8 @@ function insertInventario(chatId,user){
     bot.sendMessage(chatId,`Registro finalizado, bienvenido a team Bronza, ${user}`);
     pool.pool.query(insertRegister, (error) => {
         if (error){
-            console.log("Error con el pool de insertInventario: ",error)
+            console.log("Error con el pool de insertInventario: ",error);
+            bot.sendMessage(chatId,'Vuelve a intentarlo, ha ocurrido un error')
 			throw error; 
         } else {
             console.log("registrado éxitosamente.");
