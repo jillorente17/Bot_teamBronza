@@ -6,11 +6,11 @@ var DBConfig = {
     connectTimeout  : 60 * 60 * 1000,
     acquireTimeout  : 60 * 60 * 1000,
     timeout         : 60 * 60 * 1000,
-    host: "localhost",
+    host: "db4free.net",
     port: 3306,
     database: "db_b",
-    user: "root",
-    password: ""
+    user: "bowshot721",
+    password: "7912312Jose"
 };
 
 var pool = mysql.createPool(DBConfig);
