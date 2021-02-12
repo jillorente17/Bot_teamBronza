@@ -51,7 +51,7 @@ bot.onText(/^\/opciones/, (msg)=>{
     registerButton(chatId,member);
 
 });
-bot.onText(/^\/opciones/, (msg)=>{
+bot.onText(/^\/cerrar/, (msg)=>{
     bot.close();
 })
 bot.onText(/^\/recordatorio/,(msg)=>{
