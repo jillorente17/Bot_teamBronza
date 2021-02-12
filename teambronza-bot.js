@@ -1,11 +1,11 @@
 
 const TelegramBot = require('node-telegram-bot-api'); //Api del bot
 const { on } = require('nodemon');//proceso nodemon
-const token = '1497336724:AAEA2iYXPqa_OW5aVJ0nft7Z2kIFzRfh8ts';// token de acceso al bot
+const token = '1497336724:AAGn0S2d1KyNJlsDpH8QokTgFfwtun-cRns';// token de acceso al bot
 const options = {polling:true}
-const options2 = {url: "localhost"};
 const bot = new TelegramBot(token, options);//consultar los textos y escritos del chat
 var pool = require('./db_config');//configuración de la base de datos
+var mongo = require('./mongodb_config');
 const emoji = require('node-emoji').emoji;
 //revisar los errores del bot
 bot.on('polling_error', function(error){
@@ -74,7 +74,7 @@ let registerButton = (chatId,member)=>{
         reply_markup:{
             inline_keyboard:[
                 [{text: "Registrar", callback_data:"register"},{text:"Consultar",callback_data:"consult"}],
-                [{text:"Modificar", callback_data:"modify"},{text:"jkshadhs",callback_data:"delete"}]
+                [{text:"Modificar", callback_data:"modify"},{text:"Borrar",callback_data:"delete"}]
             ],  
             one_time_keyboard:true,
             resize_keyboard:true,
@@ -179,6 +179,10 @@ bot.on('text', (msg)=>{
     member = msg.from.first_name;
     GMessage = ["Buenos días"];
     checkMsg(chatId,member,msg.text);
+    console.log(msg.text,member);
+  
+        //bot.sendPhoto(chatId,"C:/Users/Acer 573L/Downloads/Mauro.jpg")
+    
     if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mauro') && member=="Gisell"|| 
        msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mario') && member=="Gisell"){
             bot.sendMessage(chatId,"Jose dice: Duren");
@@ -348,6 +352,8 @@ function findAll(chatId){
     let memberFrame=[];
     let tempFrame ="";
     let allMembers=""
+
+
  
     pool.pool.query(findAll,(error,data)=>{
         if(error){
@@ -374,6 +380,9 @@ function insertInventario(chatId,user){
     finalName = dataRegister[user]["name"];
     finalCity = dataRegister[user]["city"];
     finalSummoner = dataRegister[user]["summoner"];
+
+    mongo.insertData(finalDate,finalName,finalCity,finalSummoner);
+
     insertRegister = `INSERT INTO registro VALUES (uuid(),'${finalName}', '${finalDate}', '${finalCity}', '${finalSummoner}');`
     bot.sendMessage(chatId,`Registro finalizado, bienvenido a team Bronza, ${user}`);
     pool.pool.query(insertRegister, (error) => {
