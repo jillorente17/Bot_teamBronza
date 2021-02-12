@@ -165,6 +165,7 @@ bot.on("callback_query", function onCallbackQuery(data){
 //Activación de comandos por texto
 
 bot.on('text', (msg)=>{
+    console.log("estoy aquí")
     chatId = msg.chat.id;
     member = msg.from.first_name;
     currentDate = new Date();

@@ -20,8 +20,8 @@ pool.on('connection', (connection) => {
   
 	connection.on('error', (err) => {
 	  console.error(new Date(), 'Error de MySQL: ', err.code);
-	});
 	
+  });
 	connection.on('close', (err) => {
 	  console.error(new Date(), 'Conexión cerrada con la DB.', err);
 	});
