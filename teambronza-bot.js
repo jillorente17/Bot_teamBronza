@@ -74,7 +74,7 @@ let registerButton = (chatId,member)=>{
         reply_markup:{
             inline_keyboard:[
                 [{text: "Registrar", callback_data:"register"},{text:"Consultar",callback_data:"consult"}],
-                [{text:"Modificar", callback_data:"modify"},{text:"Borrar",callback_data:"delete"}]
+                [{text:"Modificar", callback_data:"modify"},{text:"jkshadhs",callback_data:"delete"}]
             ],  
             one_time_keyboard:true,
             resize_keyboard:true,
