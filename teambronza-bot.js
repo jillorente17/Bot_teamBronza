@@ -51,6 +51,9 @@ bot.onText(/^\/opciones/, (msg)=>{
     registerButton(chatId,member);
 
 });
+bot.onText(/^\/opciones/, (msg)=>{
+    bot.close();
+})
 bot.onText(/^\/recordatorio/,(msg)=>{
     chatId = msg.chat.id;
     currentDate = new Date();
