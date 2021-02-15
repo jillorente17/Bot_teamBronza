@@ -1,15 +1,19 @@
+const token = '1497336724:AAHbidNd_h4IFe7jFQAws1xasIao6bTFSgU';// token de acceso al bot
 
-const TelegramBot = require('node-telegram-bot-api'); //Api del bot
-const { on } = require('nodemon');//proceso nodemon
-const token = '1497336724:AAGn0S2d1KyNJlsDpH8QokTgFfwtun-cRns';// token de acceso al bot
-const options = {polling:true}
-const bot = new TelegramBot(token, options);//consultar los textos y escritos del chat
-var pool = require('./db_config');//configuración de la base de datos
-var mongo = require('./mongodb_config');
+const TelegramBot = require('node-telegram-bot-api')
+
+const bot = new TelegramBot(token, { polling: true});
+const User = require('./model/user.model')
+
+
+
+const database = require('./app')
 const emoji = require('node-emoji').emoji;
+//const userController = require('./controller/userController');
+
 //revisar los errores del bot
-bot.on('polling_error', function(error){
-    console.log(error);
+bot.on('polling_error', (error)=>{
+    console.log("error", error.stack);
 });
 
 //Buenos días del bot.
@@ -117,9 +121,8 @@ bot.on("callback_query", function onCallbackQuery(data){
     action = data.data;
     member = data.from.first_name;
     chatId = data.message.chat.id;
-    setTimeout(()=>{
-
-    },)
+    msgId = data.message.message_id;
+    console.log(msgId)
     switch(action){
         case "register":
             const nameMsg = `Después del comando *nombre*, escriba su nombre: `
@@ -175,16 +178,17 @@ bot.on('text', (msg)=>{
     member = msg.from.first_name;
     currentDate = new Date();
     cHour = currentDate.getHours();
-    chatId = msg.chat.id;
-    member = msg.from.first_name;
-    GMessage = ["Buenos días","Buenos dias","Hola bot","bot"];
+
+    GMessage = ["Buenos días"];
     checkMsg(chatId,member,msg.text);
-
-    testDate = new Date(`${currentDate}`).toISOString()
-    console.log((testDate[11]+testDate[12])-5)
     
-
-    if(GMessage.includes(msg.text)){
+    
+    if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mauro') && member=="Gisell"|| 
+       msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mario') && member=="Gisell"){
+            bot.sendMessage(chatId,"Jose dice: Duren");
+            bot.sendMessage(chatId,`${emoji.thumbsup}`);
+        }
+    else if(GMessage.includes(msg.text.substring(0,11))){
         if(member.toString() == "Jose" && cHour>6 && cHour<12){
             bot.sendMessage(chatId,`Buenos días, Señor`);
         }
@@ -324,41 +328,60 @@ function findBirthday(chatId,date){
         }
     });
 }
-function findName(chatId,name){
-    let findName = `SELECT name, city, name_lol FROM db_b.registro WHERE name='${name}'`
-    pool.pool.query(findName, (error,data) => {
-        if (error){
-            console.log("Error con el pool de insertInventario: ",error)
-			throw error; 
-        } else {
- 
-            if(data.length==0){
-                bot.sendMessage(chatId,`No encontramos nada sobre esta persona.`)
-            }
-            for(i=0;i<data.length;i++){
+function findName(chatId,name1){
 
-           bot.sendMessage(chatId,`Esto encontramos de: ${data[i]['name']}, que vive en ${data[i]['city']} y lo encuentras en lol como: ${data[i]['name_lol']}`);
-                
-            }
-        }
-    });
+    console.log(name1)
+    User.User.find({name: name1}).then(res =>{
+
+        if(res.length == 0)bot.sendMessage(chatId,`No encontramos nada sobre esta persona.`);
+        res.forEach(result=>{
+            bot.sendMessage(chatId,`Esto encontramos de: ${result.name}, que vive en ${result.city} y lo encuentras en lol como: ${result.summoner}`);
+
+        })
+    }).catch(err =>{
+        console.log(err);
+    })
 };
+
 function findAll(chatId){
 
+    let names = [];
+    let dataParser = "";
 
-    console.log(mongo.findAll());
+    User.User.find({}).then(res=>{
+        bot.sendMessage(chatId,`hay ${res.length} miembros registrados`);
+        
+        res.forEach(datos=>{
+            names.push(datos.name);
+            dataParser = names.toString();
+        })
+        bot.sendMessage(chatId,`*Miembros registrados:* \n${dataParser.replace(/,/g,'\n')}`,{parse_mode:"Markdown"});
 
+
+    })
+        .catch(err=>{
+        console.log(err);
+    });
+
+ 
 };
 
 
-function insertInventario(chatId,user){
-    finalDate = dataRegister[user]["date"];
-    finalName = dataRegister[user]["name"];
-    finalCity = dataRegister[user]["city"];
-    finalSummoner = dataRegister[user]["summoner"];
+function insertInventario(chatId, user){
 
-    mongo.insertData(finalDate,finalName,finalCity,finalSummoner);
+    const user1 = new User.User()
 
+    user1.date = dataRegister[user]["date"];
+    user1.name = dataRegister[user]["name"];
+    user1.city = dataRegister[user]["city"];
+    user1.summoner = dataRegister[user]["summoner"];
+
+    user1.save((err, result) =>{
+        if(err) return err;
+        bot.sendMessage(chatId,`Se ha registrado correctamente: \n *Datos: ${user1.name}\n${user1.city}\n${user1.date}\n${user1.summoner}*`,{parse_mode:"Markdown"});
+        return result;
+    })
+  
 };
 
 function birthdayConsultation(chatId,month){
