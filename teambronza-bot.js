@@ -170,25 +170,21 @@ bot.on("callback_query", function onCallbackQuery(data){
 //Activación de comandos por texto
 
 bot.on('text', (msg)=>{
-    console.log("estoy aquí")
+
     chatId = msg.chat.id;
     member = msg.from.first_name;
     currentDate = new Date();
     cHour = currentDate.getHours();
     chatId = msg.chat.id;
     member = msg.from.first_name;
-    GMessage = ["Buenos días"];
+    GMessage = ["Buenos días","Buenos dias","Hola bot","bot"];
     checkMsg(chatId,member,msg.text);
-    console.log(msg.text,member);
-  
-        //bot.sendPhoto(chatId,"C:/Users/Acer 573L/Downloads/Mauro.jpg")
+
+    testDate = new Date(`${currentDate}`).toISOString()
+    console.log((testDate[11]+testDate[12])-5)
     
-    if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mauro') && member=="Gisell"|| 
-       msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mario') && member=="Gisell"){
-            bot.sendMessage(chatId,"Jose dice: Duren");
-            bot.sendMessage(chatId,`${emoji.thumbsup}`);
-        }
-    else if(GMessage.includes(msg.text.substring(0,11))){
+
+    if(GMessage.includes(msg.text)){
         if(member.toString() == "Jose" && cHour>6 && cHour<12){
             bot.sendMessage(chatId,`Buenos días, Señor`);
         }
@@ -348,30 +344,10 @@ function findName(chatId,name){
     });
 };
 function findAll(chatId){
-    let findAll = `SELECT name FROM db_b.registro`
-    let memberFrame=[];
-    let tempFrame ="";
-    let allMembers=""
 
 
- 
-    pool.pool.query(findAll,(error,data)=>{
-        if(error){
-            console.log("Error en la pool de Select all",error);
-        }else{
-            bot.sendMessage(chatId,`hay ${data.length} miembros registrados`);
-            for(i=0;i<data.length;i++){
-                
-                tempFrame =`${data[i]["name"]}`
-                memberFrame.push(tempFrame);
-                allMembers = memberFrame.toString();
-                
+    console.log(mongo.findAll());
 
-            }
-            bot.sendMessage(chatId,`*Miembros registrados:* \n${allMembers.replace(/,/g,'\n')}`,{parse_mode:"Markdown"});
-        }
-    })
- 
 };
 
 
@@ -383,17 +359,6 @@ function insertInventario(chatId,user){
 
     mongo.insertData(finalDate,finalName,finalCity,finalSummoner);
 
-    insertRegister = `INSERT INTO registro VALUES (uuid(),'${finalName}', '${finalDate}', '${finalCity}', '${finalSummoner}');`
-    bot.sendMessage(chatId,`Registro finalizado, bienvenido a team Bronza, ${user}`);
-    pool.pool.query(insertRegister, (error) => {
-        if (error){
-            console.log("Error con el pool de insertInventario: ",error);
-            bot.sendMessage(chatId,'Vuelve a intentarlo, ha ocurrido un error')
-			throw error; 
-        } else {
-            console.log("registrado éxitosamente.");
-        }
-    });
 };
 
 function birthdayConsultation(chatId,month){
