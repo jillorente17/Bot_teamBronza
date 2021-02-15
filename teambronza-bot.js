@@ -122,12 +122,15 @@ bot.on("callback_query", function onCallbackQuery(data){
     member = data.from.first_name;
     chatId = data.message.chat.id;
     msgId = data.message.message_id;
+
+
     console.log(msgId)
     switch(action){
         case "register":
             const nameMsg = `Después del comando *nombre*, escriba su nombre: `
             createRegister(chatId,member,`register`,`activated`);
             bot.sendMessage(chatId,nameMsg,{parse_mode: "Markdown"});
+            
             break;
         case "yesContinue":
             const yesContinueMsg = `Opcion en desarrollo`
@@ -176,6 +179,9 @@ bot.on('text', (msg)=>{
 
     chatId = msg.chat.id;
     member = msg.from.first_name;
+    msgId = msg.message_id;
+    
+
     currentDate = new Date();
     cHour = currentDate.getHours();
 
@@ -215,6 +221,7 @@ else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().i
                 bot.sendMessage(chatId,`No has asignado un nombre`);
             }else{
             createRegister(chatId,member,'name',memberName);
+            bot.deleteMessage(chatId, msgId);
             bot.sendMessage(chatId,`Bien. 
     Ahora, seguido de *fecha* ingresa tu fecha de nacimiento de esta forma: aaaa-mm-dd` , {parse_mode: "Markdown"});
             }
