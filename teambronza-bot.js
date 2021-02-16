@@ -1,5 +1,5 @@
 
-const token = '1497336724:AAGU79eMIcvvTUDeH1fSYFiTMxe7EKGofnc';// token de acceso al bot
+const token = '1497336724:AAHGYp-2ykGxV_UzDCeJl2HlwBzBusY0knw';// token de acceso al bot
 const TelegramBot = require('node-telegram-bot-api')
 const bot = new TelegramBot(token, { polling: true});
 
@@ -189,8 +189,7 @@ bot.on('text', (msg)=>{
     }else{
         cHour = dateNoOffset-5;
     }
-    
-    //console.log(dateNoOffset)
+
     GMessage = ["buenos dias"];
     AMessage = ["buenas tardes"];
     EMessage = ["buenas noches"];
