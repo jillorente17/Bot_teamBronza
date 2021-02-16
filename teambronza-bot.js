@@ -1,22 +1,17 @@
+
 const token = '1497336724:AAHbidNd_h4IFe7jFQAws1xasIao6bTFSgU';// token de acceso al bot
-
 const TelegramBot = require('node-telegram-bot-api')
-
 const bot = new TelegramBot(token, { polling: true});
-const User = require('./model/user.model')
 
-
-
-const database = require('./app')
+const User = require('./model/user.model');
+const database = require('./app');
 const emoji = require('node-emoji').emoji;
-//const userController = require('./controller/userController');
+
 
 //revisar los errores del bot
 bot.on('polling_error', (error)=>{
     console.log("error", error.stack);
 });
-
-//Buenos días del bot.
 
 // Objecto encargado de recolectar la información de registro.
 var dataRegister={};
@@ -57,9 +52,7 @@ bot.onText(/^\/opciones/, (msg)=>{
     registerButton(chatId,member);
 
 });
-bot.onText(/^\/cerrar/, (msg)=>{
-    bot.getUpdates(options).close();
-})
+
 bot.onText(/^\/recordatorio/,(msg)=>{
     chatId = msg.chat.id;
     currentDate = new Date();
@@ -72,7 +65,6 @@ bot.onText(/^\/recordatorio/,(msg)=>{
 });
 
 //Botones del bot
-
 let registerButton = (chatId,member)=>{
     optRegister = {
         reply_markup:{
@@ -84,10 +76,11 @@ let registerButton = (chatId,member)=>{
             resize_keyboard:true,
             remove_keyboard:true     
         }
-    }
+    };
     bot.sendMessage(chatId,`Ok ${member}. Seleccione alguna de las opciones a continuación`,optRegister);
     
 };
+
 let finishButton = async (chatId,member) =>{
     optFinish = {
         reply_markup:{
@@ -102,6 +95,7 @@ let finishButton = async (chatId,member) =>{
     bot.sendMessage(chatId,`¿${member} deseas continuar?`,optFinish);
     
 };
+
 let consultButtons = async (chatId,member) =>{
     optConsult = {
         reply_markup: {
@@ -115,7 +109,8 @@ let consultButtons = async (chatId,member) =>{
         }
     }
     bot.sendMessage(chatId,`Ok ${member}. Seleccione el criterio de búsqueda`, optConsult)
-}
+};
+
 //Callbacks de los botones
 bot.on("callback_query", function onCallbackQuery(data){
     action = data.data;
@@ -123,17 +118,16 @@ bot.on("callback_query", function onCallbackQuery(data){
     chatId = data.message.chat.id;
     msgId = data.message.message_id;
 
-
     console.log(msgId)
     switch(action){
         case "register":
-            const nameMsg = `Después del comando *nombre*, escriba su nombre: `
+            const nameMsg = `Después del comando *nombre*, escriba su nombre: `;
             createRegister(chatId,member,`register`,`activated`);
             bot.sendMessage(chatId,nameMsg,{parse_mode: "Markdown"});
-            
+            bot.deleteMessage(chatId,msgId);
             break;
         case "yesContinue":
-            const yesContinueMsg = `Opcion en desarrollo`
+            const yesContinueMsg = `Opcion en desarrollo`;
             bot.sendMessage(chatId,yesContinueMsg,{parse_mode:"Markdown"});
             registerButton(chatId);
             break;
@@ -181,38 +175,54 @@ bot.on('text', (msg)=>{
     member = msg.from.first_name;
     msgId = msg.message_id;
     
-
     currentDate = new Date();
-    cHour = currentDate.getHours();
+    console.log("Hora en 00: " + currentDate.toISOString()[11],currentDate.toISOString()[12]);
+    console.log("Hora menos -5: " + ((currentDate.toISOString()[11] + currentDate.toISOString()[12])-6));
+    var cHour = 0;
+    if((currentDate.toISOString()[11]+currentDate.toISOString()[12]-5)<0){
 
-    GMessage = ["Buenos días"];
+        cHourTemp = (currentDate.toISOString()[11] + currentDate.toISOString()[12]);
+        cHour = parseInt((cHourTemp),10);
+        cHourTemp = cHour+23
+        console.log(cHourTemp-6);
+
+    }else if(cHour){
+
+    }
+    
+
+    GMessage = ["buenos dias"];
+    AMessage = ["buenas tardes"];
+    EMessage = ["buenas noches"];
+
+    
     checkMsg(chatId,member,msg.text);
-    
-    
-    if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mauro') && member=="Gisell"|| 
-       msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mario') && member=="Gisell"){
-            bot.sendMessage(chatId,"Jose dice: Duren");
-            bot.sendMessage(chatId,`${emoji.thumbsup}`);
-        }
-    else if(GMessage.includes(msg.text.substring(0,11))){
-        if(member.toString() == "Jose" && cHour>6 && cHour<12){
+   
+    if(GMessage.includes(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase())){
+        if(member.toString() == "Jose" && cHour>=6 && cHour<12){
             bot.sendMessage(chatId,`Buenos días, Señor`);
-        }
-        else if(cHour>6 && cHour<12){
+        }else if(cHour>6 && cHour<12){
             bot.sendMessage(chatId,`Buenos días ${member}`);
-        } 
-        else if(cHour> 12 && cHour<18){
-            bot.sendMessage(chatId, `Buenas tardes, querrás decir`)
         }
-    }
-else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('test')){
-    if(msg.text.substring(5, msg.text.length) == "on"){
-        bot.sendMessage(chatId, `Hola, esta opción la usa mi creador para pruebas`);
-        
-    }
-    
+    }else if(AMessage.includes(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase())){
+        if(member.toString() == "Jose" && cHour>=12 && cHour<18){
+            bot.sendMessage(chatId,`Buenos tardes, Señor`);
+        }else if(cHour>12 && cHour<18){
+            bot.sendMessage(chatId,`Buenos tardes ${member}`);
+        }
+    }else if(EMessage.includes(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase())){
+        if(member.toString() == "Jose" && cHour>=18 && cHour<23){
+            bot.sendMessage(chatId,`Buenos noches, Señor`);
+        }else if(cHour>18 && cHour<23){
+            bot.sendMessage(chatId,`Buenos noches ${member}`);
+        }
+    }else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('test')){
+        if(msg.text.substring(5, msg.text.length) == "on"){
+            bot.sendMessage(chatId, `Hola, esta opción la usa mi creador para pruebas`);  
+        }
+
 //registro de los miembros
-}else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('nombre')){
+    }else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('nombre')){
     
         if(dataRegister[member]["register"] ==="activated"){
 
@@ -222,19 +232,15 @@ else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().i
             }else{
             createRegister(chatId,member,'name',memberName);
             bot.deleteMessage(chatId, msgId);
-            bot.sendMessage(chatId,`Bien. 
-    Ahora, seguido de *fecha* ingresa tu fecha de nacimiento de esta forma: aaaa-mm-dd` , {parse_mode: "Markdown"});
-            }
-            
+            bot.sendMessage(chatId,`Bien. \n Ahora, seguido de *fecha* ingresa tu fecha de nacimiento de esta forma: aaaa-mm-dd` , {parse_mode: "Markdown"});
+            }    
+        }else if(dataRegister[member]["consult"]=="activated"){
+
+                let name =  msg.text.substring(7, msg.text.length);
+                findName(chatId,name);
+
         }
-    else if(dataRegister[member]["consult"]=="activated"){
-
-            let name =  msg.text.substring(7, msg.text.length);
-            findName(chatId,name);
-
-    }
-}
-    else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('fecha')){
+    }else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('fecha')){
 
         if(dataRegister[member]["register"] ==="activated"){
             memberDate = msg.text.substring(5, msg.text.length);
@@ -245,8 +251,7 @@ else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().i
             bot.sendMessage(chatId,`Bien.\nAhora seguido de la palabra *ciudad* ingresa el nombre de la ciudad: `, {parse_mode:"Markdown"});
 
         }
-    }
-    else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mes')){
+    }else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mes')){
 
             console.log(`aquí`);
             if(dataRegister[member]["consult"]==="activated"){
@@ -254,8 +259,7 @@ else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().i
              findBirthday(chatId,dateMonth);
 
             }
-        }
-    else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('ciudad')){
+    }else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('ciudad')){
         
         if(dataRegister[member]["register"] ==="activated"){
             memberCity = msg.text.substring(6, msg.text.length)
@@ -276,7 +280,6 @@ else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().i
 
 });
 
-
 function checkMsg(chatId,member,msg){
 
     if (Object.keys(dataRegister).length == 0){
@@ -284,6 +287,7 @@ function checkMsg(chatId,member,msg){
     }
     
 }
+
 //Funciones de llamados de los CallbackQueries
 function findBirthday(chatId,date){
     let tempDate= date;
@@ -392,48 +396,5 @@ function insertInventario(chatId, user){
 };
 
 function birthdayConsultation(chatId,month){
-    let member 
-    let birthdayConsultation = `SELECT date_birth,name FROM db_b.registro`
-    pool.pool.query(birthdayConsultation, (error,data) => {
-        if (error){
-            console.log("Error con el pool de insertInventario: ",error);
-			throw error; 
-        } else {
-            for(i=0;i<data.length;i++){
-                cDateAn = data[i]["date_birth"];
-                member = data[i]["name"];
-                monthBD = cDateAn.toString().substring(4,7);
-                dayBD = cDateAn.toString().substring(8,10);
-                if(month==1){
-                    month = "Jan"
-                }else if(month==2){
-                    month = "Feb"
-                }else if(month==3){
-                    month = "Mar"
-                }else if(month==4){
-                    month = "Apr"
-                }else if(month==5){
-                    month = "May"
-                }else if(month==6){
-                    month = "Jun"
-                }else if(month==7){
-                    month = "Jul"
-                }else if(month==8){
-                    month = "Aug"
-                }else if(month==9){
-                    month = "Sep"
-                }else if(month==10){
-                    month = "Oct"
-                }else if(month==11){
-                    month = "Nov"
-                }else if(month==12){
-                    month = "Dec"
-                }
-                if(month == monthBD){
-                    bot.sendMessage(chatId,`Chicos, recuerden que este mes cumple ${member}, el día ${dayBD} de ${month}`);
-                }
-            }
-            
-        }
-    });
+    
 };
