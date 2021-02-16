@@ -1,5 +1,5 @@
 
-const token = '1497336724:AAHbidNd_h4IFe7jFQAws1xasIao6bTFSgU';// token de acceso al bot
+const token = '1497336724:AAGWfTosJgkB5lly9-zprFtpFbXvJxyIrGM';// token de acceso al bot
 const TelegramBot = require('node-telegram-bot-api')
 const bot = new TelegramBot(token, { polling: true});
 
