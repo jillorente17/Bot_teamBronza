@@ -118,7 +118,6 @@ bot.on("callback_query", function onCallbackQuery(data){
     chatId = data.message.chat.id;
     msgId = data.message.message_id;
 
-    console.log(msgId)
     switch(action){
         case "register":
             const nameMsg = `Después del comando *nombre*, escriba su nombre: `;
@@ -136,6 +135,7 @@ bot.on("callback_query", function onCallbackQuery(data){
             break;
         case "consult":
             consultButtons(chatId,member);
+            bot.deleteMessage(chatId,msgId);
             createRegister(chatId,member,`consult`,`activated`);
             break;
         case "name":
@@ -148,10 +148,12 @@ bot.on("callback_query", function onCallbackQuery(data){
             bot.sendMessage(chatId,`Escriba *ciudad* más el nombre de la ciudad de la persona a buscar`,{parse_mode:"Markdown"});
             break;
         case "birthday":
-        bot.sendMessage(chatId,`Escriba *mes* más el mes de la persona a buscar`,{parse_mode:"Markdown"});
+            bot.deleteMessage(chatId,msgId);
+            bot.sendMessage(chatId,`Escriba *mes* más el mes de la persona a buscar`,{parse_mode:"Markdown"});
             break;
         case "allMembers":
-        findAll(chatId);
+            bot.deleteMessage(chatId,msgId);
+            findAll(chatId);
             break;
         case "modify":
             const modifyMsg = `Opción en desarrollo`
@@ -175,45 +177,44 @@ bot.on('text', (msg)=>{
     member = msg.from.first_name;
     msgId = msg.message_id;
     
-    currentDate = new Date();
-    console.log("Hora en 00: " + currentDate.toISOString()[11],currentDate.toISOString()[12]);
-    console.log("Hora menos -5: " + ((currentDate.toISOString()[11] + currentDate.toISOString()[12])-6));
+    var currentDate = new Date();
+    var dateNoOffset = currentDate.toISOString()[11]+currentDate.toISOString()[12];
     var cHour = 0;
-    if((currentDate.toISOString()[11]+currentDate.toISOString()[12]-5)<0){
-
-        cHourTemp = (currentDate.toISOString()[11] + currentDate.toISOString()[12]);
-        cHour = parseInt((cHourTemp),10);
-        cHourTemp = cHour+23
-        console.log(cHourTemp-6);
-
-    }else if(cHour){
-
+    if((dateNoOffset)<5){
+        dateNoOffset = dateNoOffset - 5;
+        console.log(dateNoOffset)
+        cHour = parseInt((dateNoOffset),10);
+        cHourTemp = cHour+24
+        console.log(cHourTemp)
+    
+    }else{
+        cHour = dateNoOffset-5;
     }
     
-
+    //console.log(dateNoOffset)
     GMessage = ["buenos dias"];
     AMessage = ["buenas tardes"];
     EMessage = ["buenas noches"];
 
     
     checkMsg(chatId,member,msg.text);
-   
-    if(GMessage.includes(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase())){
+ 
+    if(GMessage.includes(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().substring(0,11))){
         if(member.toString() == "Jose" && cHour>=6 && cHour<12){
             bot.sendMessage(chatId,`Buenos días, Señor`);
         }else if(cHour>6 && cHour<12){
             bot.sendMessage(chatId,`Buenos días ${member}`);
         }
-    }else if(AMessage.includes(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase())){
+    }else if(AMessage.includes(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().substring(0,11))){
         if(member.toString() == "Jose" && cHour>=12 && cHour<18){
             bot.sendMessage(chatId,`Buenos tardes, Señor`);
         }else if(cHour>12 && cHour<18){
             bot.sendMessage(chatId,`Buenos tardes ${member}`);
         }
-    }else if(EMessage.includes(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase())){
-        if(member.toString() == "Jose" && cHour>=18 && cHour<23){
+    }else if(EMessage.includes(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().substring(0,11))){
+        if(member.toString() == "Jose" && cHour>=18 && cHour<23 || cHour>0 && cHour<6){
             bot.sendMessage(chatId,`Buenos noches, Señor`);
-        }else if(cHour>18 && cHour<23){
+        }else if(cHour>18 && cHour<23 || cHour>0 && cHour<6){
             bot.sendMessage(chatId,`Buenos noches ${member}`);
         }
     }else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('test')){
@@ -235,7 +236,7 @@ bot.on('text', (msg)=>{
             bot.sendMessage(chatId,`Bien. \n Ahora, seguido de *fecha* ingresa tu fecha de nacimiento de esta forma: aaaa-mm-dd` , {parse_mode: "Markdown"});
             }    
         }else if(dataRegister[member]["consult"]=="activated"){
-
+                bot.deleteMessage(chatId,msgId);
                 let name =  msg.text.substring(7, msg.text.length);
                 findName(chatId,name);
 
@@ -253,11 +254,10 @@ bot.on('text', (msg)=>{
         }
     }else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mes')){
 
-            console.log(`aquí`);
+
             if(dataRegister[member]["consult"]==="activated"){
              dateMonth = msg.text.substring(3,msg.text.length);
              findBirthday(chatId,dateMonth);
-
             }
     }else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('ciudad')){
         
@@ -289,59 +289,79 @@ function checkMsg(chatId,member,msg){
 }
 
 //Funciones de llamados de los CallbackQueries
-function findBirthday(chatId,date){
-    let tempDate= date;
-    if(date.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('ene')){
-        date = 'jan'
-    }else if(date.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('feb')){
-        date = 'feb'
-    }else if(date.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mar')){
-        date = 'mar'
-    }else if(date.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('abr')){
-        date = 'apr'
-    }else if(date.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('may')){
-        date = 'may'
-    }else if(date.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('jun')){
-        date = 'jun'
-    }else if(date.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('jul')){
-        date = 'jul'
-    }else if(date.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('ago')){
-        date = 'aug'
-    }else if(date.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('sep')){
-        date = 'sep'
-    }else if(date.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('oct')){
-        date = 'oct'
-    }else if(date.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('nov')){
-        date = 'nov'
-    }else if(date.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('dic')){
-        date = 'dec'
+function insertInventario(chatId, user){
+
+    const user1 = new User.User()
+
+    user1.date = dataRegister[user]["date"];
+    user1.name = dataRegister[user]["name"];
+    user1.city = dataRegister[user]["city"];
+    user1.summoner = dataRegister[user]["summoner"];
+
+    user1.save((err, result) =>{
+        if(err) return err;
+        bot.sendMessage(chatId,`Se ha registrado correctamente: \n *Datos: \n *Nombre: *${user1.name}\n *Ciudad: *${user1.city}\n *Fecha: *${user1.date.toString().substring(3,16)}\n*Invocador: *${user1.summoner}*`,{parse_mode:"Markdown"});
+        return result;
+    })
+  
+};
+function findBirthday(chatId,reqDate){
+    let tempreqDate= reqDate;
+    if(reqDate.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('ene')){
+        reqDate = 'jan'
+    }else if(reqDate.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('feb')){
+        reqDate = 'feb'
+    }else if(reqDate.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mar')){
+        reqDate = 'mar'
+    }else if(reqDate.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('abr')){
+        reqDate = 'apr'
+    }else if(reqDate.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('may')){
+        reqDate = 'may'
+    }else if(reqDate.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('jun')){
+        reqDate = 'jun'
+    }else if(reqDate.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('jul')){
+        reqDate = 'jul'
+    }else if(reqDate.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('ago')){
+        reqDate = 'aug'
+    }else if(reqDate.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('sep')){
+        reqDate = 'sep'
+    }else if(reqDate.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('oct')){
+        reqDate = 'oct'
+    }else if(reqDate.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('nov')){
+        reqDate = 'nov'
+    }else if(reqDate.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('dic')){
+        reqDate = 'dec'
     }
     let memberName=[];
-    let findBirthday =`SELECT date_birth,name from db_b.registro`;
-    pool.pool.query(findBirthday, (error,data) => {
-        if(error){
-            console.log("Error con el pool de insertInventario: ",error);
-			throw error; 
-        } else {
-            for(i=0;i<data.length;i++){
-                dates = data[i]["date_birth"].toString();
-                tempMonth = dates.substring(3,7).toLowerCase().replace(' ','');
-                if(tempMonth === date){
-                    memberName.push(data[i]["name"]);
-                }
-                
+    let dayBD = [];
+    var outputMsg = ""
+    User.User.find({}).then(res =>{
+        res.forEach(result=>{
+            tempreqDate = result["date"].toString();
+            dateSplited = tempreqDate.split(" ");
+            month = dateSplited[1];
+            day = dateSplited[2];
+            if(month.toLowerCase() == reqDate){
+                memberName.push(result["name"]);
+                dayBD.push(day);
             }
-            if(memberName.length==0){
-                bot.sendMessage(chatId,`No hay nadie que cumpla en este mes ${emoji.fearful}`)
-            }else{
-            bot.sendMessage(chatId,`Los miembros que cumplen en el mes de ${tempDate}, son: ${memberName.toString().replace(/,/g,'\n')}`);
-            }
+        })
+
+        for(i=0;i<memberName.length;i++){
+            outputMsgTemp = `*\n ${memberName[i]}, día ${dayBD[i]}*`
+            outputMsg = outputMsg + outputMsgTemp;
+
         }
+
+        bot.sendMessage(chatId, `En el mes de ${reqDate} cumple(n): ${outputMsg}`, {parse_mode: "Markdown"});
+    }).catch(err =>{
+        console.log(err)
     });
-}
+   
+};
 function findName(chatId,name1){
 
-    console.log(name1)
+
     User.User.find({name: name1}).then(res =>{
 
         if(res.length == 0)bot.sendMessage(chatId,`No encontramos nada sobre esta persona.`);
@@ -375,24 +395,6 @@ function findAll(chatId){
     });
 
  
-};
-
-
-function insertInventario(chatId, user){
-
-    const user1 = new User.User()
-
-    user1.date = dataRegister[user]["date"];
-    user1.name = dataRegister[user]["name"];
-    user1.city = dataRegister[user]["city"];
-    user1.summoner = dataRegister[user]["summoner"];
-
-    user1.save((err, result) =>{
-        if(err) return err;
-        bot.sendMessage(chatId,`Se ha registrado correctamente: \n *Datos: ${user1.name}\n${user1.city}\n${user1.date}\n${user1.summoner}*`,{parse_mode:"Markdown"});
-        return result;
-    })
-  
 };
 
 function birthdayConsultation(chatId,month){
