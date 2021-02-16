@@ -1,5 +1,5 @@
 
-const token = '1497336724:AAGU79eMIcvvTUDeH1fSYFiTMxe7EKGofnc';// token de acceso al bot
+const token = '1602995302:AAFn-yiEqsNiBl8Bb68JGOGSAGvWgv9Pnac';// token de acceso al bot
 const TelegramBot = require('node-telegram-bot-api')
 const bot = new TelegramBot(token, { polling: true});
 
@@ -18,7 +18,7 @@ var dataRegister={};
 function createRegister(chatId,user,action,info){
     userId = user.toString();
     switch(action){
-        case "chatting":
+        case "update":
             dataRegister[userId][action]=info;
             break;
         case "consult":
@@ -57,11 +57,8 @@ bot.onText(/^\/recordatorio/,(msg)=>{
     chatId = msg.chat.id;
     currentDate = new Date();
     cMonth = currentDate.getMonth();
-    cYear = currentDate.getFullYear();
-    cDay = currentDate.getDate();
-    consultationMonth = `0${cMonth+1}`;
-    console.log(`${cYear}-0${cMonth+1}-0${cDay}`);
-    birthdayConsultation(chatId,consultationMonth);
+    birthdayConsultation(chatId,cMonth);
+
 });
 
 //Botones del bot
@@ -126,9 +123,10 @@ bot.on("callback_query", function onCallbackQuery(data){
             bot.deleteMessage(chatId,msgId);
             break;
         case "yesContinue":
-            const yesContinueMsg = `Opcion en desarrollo`;
+            const yesContinueMsg = `Escriba *nombre* o *fecha* o *ciudad* o *invocador* más alguno de estos valores`;
+            bot.deleteMessage(chatId, msgId);
+            createRegister(chatId,member,`update`,`activated`);
             bot.sendMessage(chatId,yesContinueMsg,{parse_mode:"Markdown"});
-            registerButton(chatId);
             break;
         case "notContinue":
             insertInventario(chatId,member);
@@ -139,12 +137,14 @@ bot.on("callback_query", function onCallbackQuery(data){
             createRegister(chatId,member,`consult`,`activated`);
             break;
         case "name":
+            bot.deleteMessage(chatId,msgId)
             bot.sendMessage(chatId,`Escriba *nombre* más el nombre de la persona a buscar`,{parse_mode:"Markdown"});
             break;
         case "summoner":
             bot.sendMessage(chatId,`Escriba *invocador* más el nombre de invocador de la persona a buscar`,{parse_mode:"Markdown"});
             break;
         case "city":
+            bot.deleteMessage(chatId,msgId);
             bot.sendMessage(chatId,`Escriba *ciudad* más el nombre de la ciudad de la persona a buscar`,{parse_mode:"Markdown"});
             break;
         case "birthday":
@@ -197,7 +197,7 @@ bot.on('text', (msg)=>{
     EMessage = ["buenas noches"];
 
     
-    checkMsg(chatId,member,msg.text);
+    checkMsg(member);
  
     if(GMessage.includes(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().substring(0,11))){
         if(member.toString() == "Jose" && cHour>=6 && cHour<12){
@@ -236,10 +236,13 @@ bot.on('text', (msg)=>{
             bot.sendMessage(chatId,`Bien. \n Ahora, seguido de *fecha* ingresa tu fecha de nacimiento de esta forma: aaaa-mm-dd` , {parse_mode: "Markdown"});
             }    
         }else if(dataRegister[member]["consult"]=="activated"){
-                bot.deleteMessage(chatId,msgId);
-                let name =  msg.text.substring(7, msg.text.length);
-                findName(chatId,name);
+            bot.deleteMessage(chatId,msgId);
+            let name =  msg.text.substring(7, msg.text.length);
+            findName(chatId,name);
 
+        }else if(dataRegister[member]["update"]=="activated"){
+            finishButton(chatId,member);
+            bot.deleteMessage(chatId,msgId)
         }
     }else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('fecha')){
 
@@ -247,16 +250,21 @@ bot.on('text', (msg)=>{
             memberDate = msg.text.substring(5, msg.text.length);
             if(memberDate == ""){
                 bot.sendMessage(chatId,`No has asignado una fecha válida`)
+                bot.deleteMessage(chatId, msgId);
             }
             createRegister(chatId,member,'date',memberDate);
             bot.sendMessage(chatId,`Bien.\nAhora seguido de la palabra *ciudad* ingresa el nombre de la ciudad: `, {parse_mode:"Markdown"});
-
+            bot.deleteMessage(chatId, msgId);
+        }else if(dataRegister[member]["update"]=="activated"){
+            finishButton(chatId,member);
+            bot.deleteMessage(chatId,msgId)
         }
     }else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('mes')){
 
 
             if(dataRegister[member]["consult"]==="activated"){
              dateMonth = msg.text.substring(3,msg.text.length);
+             bot.deleteMessage(chatId, msgId);
              findBirthday(chatId,dateMonth);
             }
     }else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('ciudad')){
@@ -264,7 +272,15 @@ bot.on('text', (msg)=>{
         if(dataRegister[member]["register"] ==="activated"){
             memberCity = msg.text.substring(6, msg.text.length)
             createRegister(chatId,member,'city',memberCity);
+            bot.deleteMessage(chatId, msgId);
             bot.sendMessage(chatId,`Bien.\nSeguido de la palabra *invocador* digite el nombre de invocador`,{parse_mode:"Markdown"});
+        }else if(dataRegister[member]["update"]=="activated"){
+            finishButton(chatId,member);
+            bot.deleteMessage(chatId,msgId)
+        }else if(dataRegister[member]["consult"]=="activated"){
+            city = msg.text.substring(6,msg.text.length);
+            bot.deleteMessage(chatId,msgId);
+            findCity(chatId,city);
         }
     }else if(msg.text.normalize('NFD').replace(/[\u0300-\u036f]/g,"").toLowerCase().includes('invocador')){
         
@@ -272,15 +288,19 @@ bot.on('text', (msg)=>{
 
             memberSummoner = msg.text.substring(10, msg.text.length)
             createRegister(chatId,member,'summoner',memberSummoner);
+            bot.deleteMessage(chatId, msgId);
             finishButton(chatId,member);
             dataRegister[member]["register"]="deactivated"
 
+        }else if(dataRegister[member]["update"]=="activated"){
+            finishButton(chatId,member);
+            bot.deleteMessage(chatId,msgId)
         }
     }
 
 });
 
-function checkMsg(chatId,member,msg){
+function checkMsg(member){
 
     if (Object.keys(dataRegister).length == 0){
         dataRegister[member] = {}
@@ -396,7 +416,65 @@ function findAll(chatId){
 
  
 };
-
+function findCity(chatId, reqCity){
+    let names =[];
+    let outMsg = "";
+    User.User.find({city:reqCity}).then(res=>{
+        if(res.length==0) bot.sendMessage(chatId,`No encontramos a nadie con esa ciudad`);
+        else{
+        res.forEach(data=>{
+            names.push(data.name);
+        });
+        for(i=0;i<names.length;i++){
+            outMsgTemp = `\n ${names[i]}`
+            outMsg = outMsg + outMsgTemp;
+        };
+        bot.sendMessage(chatId, `Las personas que viven en ${reqCity} son: ${outMsg}`, {parse_mode:"Markdown"})
+    }
+    }).catch(err=>{
+        console.log(err);
+    })
+}
 function birthdayConsultation(chatId,month){
+    month = month+1;
+    if(month<9){
+        month = `0${month}`
+    }
+    if(month=="01") month="Jan"
+    else if(month=="02") month="Feb"
+    else if(month=="03") month="Mar"
+    else if(month=="04") month="Apr"
+    else if(month=="05") month="May"
+    else if(month=="06") month="Jun"
+    else if(month=="07") month="Jul"
+    else if(month=="08") month="Aug"
+    else if(month=="09") month="Sep"
+    else if(month=="10") month="Oct"
+    else if(month=="11") month="Nov"
+    else if(month=="12") month="Dec"
+  
+    let names =[];
+    let day = [];
+    let outputMsg="";
+    User.User.find({}).then(res=>{
+        if(res.length==0) bot.sendMessage(chatId,`nadie cumple en este mes ${emoji.worried}`)
+        else{
+            res.forEach(data=>{
+                dateStr = data.date.toString();
+                dateStr = dateStr.split(" ");
+                if(month == dateStr[1]){
+                    names.push(data.name);
+                    day.push(dateStr[2]);
+                }
+            })
+            console.log(names,day);
+            for(i=0;i<names.length;i++){
+                outputMsgTemp = `*\n ${names[i]}, día ${day[i]}*`
+                outputMsg = outputMsg + outputMsgTemp;
     
+            }
+    
+            bot.sendMessage(chatId, `En el mes de ${month} cumple(n): ${outputMsg}`, {parse_mode: "Markdown"});
+        }
+    })    
 };
