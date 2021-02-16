@@ -1,10 +1,9 @@
 
-const token = '1602995302:AAFn-yiEqsNiBl8Bb68JGOGSAGvWgv9Pnac';// token de acceso al bot
+const token = '1497336724:AAGU79eMIcvvTUDeH1fSYFiTMxe7EKGofnc';// token de acceso al bot
 const TelegramBot = require('node-telegram-bot-api')
 const bot = new TelegramBot(token, { polling: true});
 
 const User = require('./model/user.model');
-const database = require('./app');
 const emoji = require('node-emoji').emoji;
 
 
